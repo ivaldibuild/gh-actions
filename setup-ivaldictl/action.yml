@@ -1,0 +1,63 @@
+name: Setup ivaldictl
+description: Install the ivaldictl CLI and point it at your Ivaldi control plane.
+author: Ivaldi
+branding:
+  icon: terminal
+  color: gray-dark
+
+inputs:
+  version:
+    description: >-
+      The ivaldictl version to install, such as `1.4.0`, `v1.4.0` or
+      `ivaldictl/v1.4.0`. `latest` installs the newest stable release.
+    required: false
+    default: latest
+  prerelease:
+    description: >-
+      With `version: latest`, also consider pre-releases such as `1.5.0-rc.1`.
+    required: false
+    default: "false"
+  server-url:
+    description: >-
+      Address of your Ivaldi control plane. Exported as `IVALDI_SERVER_URL` for
+      the rest of the job.
+    required: false
+    default: ""
+  api-token:
+    description: >-
+      A service account's API token (`ivt_...`). Exported, masked, as
+      `IVALDI_API_TOKEN` for the rest of the job. Pass it from a secret.
+    required: false
+    default: ""
+  verify:
+    description: >-
+      Run `ivaldictl auth status` after installing, so a wrong server URL or an
+      expired token fails here rather than in a later step. Needs `api-token`.
+    required: false
+    default: "false"
+  github-token:
+    description: >-
+      Token used to read ivaldictl's GitHub Releases. The default is enough
+      when the releases are public; it also avoids anonymous rate limits.
+    required: false
+    default: ${{ github.token }}
+  repository:
+    description: The repository that publishes ivaldictl releases.
+    required: false
+    default: ivaldibuild/ivaldi
+  github-api-url:
+    description: GitHub API address for `repository`.
+    required: false
+    default: https://api.github.com
+
+outputs:
+  version:
+    description: The installed ivaldictl version, such as `1.4.0`.
+  path:
+    description: The directory holding the ivaldictl binary, which is on PATH.
+  cache-hit:
+    description: Whether the binary came from the runner's tool cache.
+
+runs:
+  using: node24
+  main: src/main.mjs
