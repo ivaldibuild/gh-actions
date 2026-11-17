@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdtempSync, readFileSync, writeFileSync, mkdirSync, chmodSync, existsSync } from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync, writeFileSync, mkdirSync, chmodSync, existsSync } from "node:fs";
 import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -159,6 +159,9 @@ test("installs the latest stable release, verifies it, and caches it", { skip },
     IVALDI_API_TOKEN: "ivt_secret",
   });
   assert.ok(existsSync(join(dir, "ivaldictl")));
+  // Nothing is left behind: no staging directory beside the entry, no download.
+  assert.deepEqual(readdirSync(join(dir, "..")).sort(), ["amd64", "amd64.complete"]);
+  assert.deepEqual(readdirSync(r.env.RUNNER_TEMP), []);
   assert.equal(
     r.read("FAKE_IVALDICTL_LOG"),
     "fake ivaldictl --version server=https://ivaldi.example.com token=set\n" +

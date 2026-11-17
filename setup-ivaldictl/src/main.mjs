@@ -95,7 +95,11 @@ export async function run({ env = process.env, platform = process.platform, arch
     info(`Verified sha256 ${got}`);
 
     const temp = join(env.RUNNER_TEMP || tmpdir(), `setup-ivaldictl-${randomUUID()}`);
-    const staging = join(temp, "out");
+    // Extract beside the cache entry, not in the temp directory: the rename
+    // into place must stay on one filesystem, and on Windows runners
+    // RUNNER_TEMP (D:) and the tool cache (C:) are on different drives.
+    const staging = `${dir}.${randomUUID()}.tmp`;
+    mkdirSync(temp, { recursive: true });
     mkdirSync(staging, { recursive: true });
     try {
       const file = join(temp, archive);
@@ -105,11 +109,11 @@ export async function run({ env = process.env, platform = process.platform, arch
 
       rmSync(dir, { recursive: true, force: true });
       rmSync(marker, { force: true });
-      mkdirSync(join(dir, ".."), { recursive: true });
       renameSync(staging, dir);
       writeFileSync(marker, "");
     } finally {
       rmSync(temp, { recursive: true, force: true });
+      rmSync(staging, { recursive: true, force: true });
     }
   }
 
