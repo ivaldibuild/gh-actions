@@ -1,0 +1,68 @@
+name: setup-ivaldictl
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - setup-ivaldictl/**
+      - .github/workflows/setup-ivaldictl.yaml
+  pull_request:
+    paths:
+      - setup-ivaldictl/**
+      - .github/workflows/setup-ivaldictl.yaml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: node --test setup-ivaldictl/test/*.test.mjs
+
+  # Installs a real release on every platform ivaldictl ships for.
+  install:
+    name: Install (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - id: setup
+        uses: ./setup-ivaldictl
+        with:
+          version: latest
+          # Until ivaldictl has a stable release.
+          prerelease: true
+          server-url: https://ivaldi.example.com
+      - shell: bash
+        env:
+          VERSION: ${{ steps.setup.outputs.version }}
+          CACHE_HIT: ${{ steps.setup.outputs.cache-hit }}
+        run: |
+          set -x
+          [ -n "$VERSION" ]
+          [ "$CACHE_HIT" = false ]
+          [ "$IVALDI_SERVER_URL" = https://ivaldi.example.com ]
+          ivaldictl --version | grep -F "$VERSION"
+      # A second install of the same version on the same runner is served from
+      # the tool cache.
+      - id: again
+        uses: ./setup-ivaldictl
+        with:
+          version: ${{ steps.setup.outputs.version }}
+      - shell: bash
+        env:
+          CACHE_HIT: ${{ steps.again.outputs.cache-hit }}
+        run: '[ "$CACHE_HIT" = true ]'
