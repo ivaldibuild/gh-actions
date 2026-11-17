@@ -1,6 +1,6 @@
 # setup-ivaldictl
 
-Installs `ivaldictl`, the Ivaldi CLI, and points it at your Ivaldi control plane, so later steps can run `ivaldictl release create`, `ivaldictl change record` and the rest.
+Installs [`ivaldictl`](https://github.com/ivaldibuild/ivaldi/tree/main/apps/cli), the Ivaldi CLI, and points it at your Ivaldi control plane, so later steps can run `ivaldictl release create`, `ivaldictl change record` and the rest.
 
 It downloads the archive for the runner's platform from ivaldictl's GitHub Releases, checks it against the release's `checksums.txt`, keeps it in the runner's tool cache, and puts `ivaldictl` on `PATH`. It runs on Linux, macOS and Windows runners, on x64 and arm64.
 
@@ -40,7 +40,7 @@ ivaldictl service-account create --name "GitHub Actions" -o text
 ivaldictl api-token create --service-account <service account ID> --name github-actions --expires-in 180d -o text
 ```
 
-Store the secret it prints once (it starts with `ivt_`) as a repository or organization secret, such as `IVALDI_API_TOKEN`.
+Store the secret it prints once (it starts with `ivt_`) as a repository or organization secret, such as `IVALDI_API_TOKEN`. See [Creating Releases from CI](https://github.com/ivaldibuild/ivaldi/blob/main/docs/self-hosting/ci-releases.md) for granting the role and for what `ivaldictl release create` reads from the workflow.
 
 ### Fail early on a bad token
 
@@ -63,7 +63,7 @@ Store the secret it prints once (it starts with `ivt_`) as a repository or organ
 | `server-url` | | Your control plane's address, exported as `IVALDI_SERVER_URL`. |
 | `api-token` | | A service account's API token (`ivt_...`), exported masked as `IVALDI_API_TOKEN`. |
 | `verify` | `false` | Run `ivaldictl auth status` after installing. Needs `api-token`. |
-| `github-token` | `${{ github.token }}` | Token for reading ivaldictl's GitHub Releases. |
+| `github-token` | `${{ github.token }}` | Token for reading ivaldictl's GitHub Releases. The releases are public; the token only avoids anonymous rate limits. |
 | `repository` | `ivaldibuild/ivaldi` | The repository that publishes ivaldictl releases (`ivaldictl/vX.Y.Z` tags). |
 | `github-api-url` | `https://api.github.com` | GitHub API address for `repository`. |
 

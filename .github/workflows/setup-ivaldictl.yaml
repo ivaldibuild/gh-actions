@@ -28,9 +28,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: node --test setup-ivaldictl/test/*.test.mjs
 
-  # Installs a real release on every platform ivaldictl ships for. ivaldictl's
-  # releases are in a private repository, so this needs a token that can read
-  # it in the IVALDICTL_RELEASES_TOKEN secret; without one the job is skipped.
+  # Installs a real release on every platform ivaldictl ships for.
   install:
     name: Install (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -40,28 +38,15 @@ jobs:
       matrix:
         os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
     steps:
-      - id: token
-        env:
-          TOKEN: ${{ secrets.IVALDICTL_RELEASES_TOKEN }}
-        shell: bash
-        run: |
-          if [ -n "$TOKEN" ]; then
-            echo "present=true" >>"$GITHUB_OUTPUT"
-          else
-            echo "::notice::IVALDICTL_RELEASES_TOKEN is not set; skipping the install test."
-          fi
-      - if: steps.token.outputs.present == 'true'
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - if: steps.token.outputs.present == 'true'
-        id: setup
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - id: setup
         uses: ./setup-ivaldictl
         with:
           version: latest
+          # Until ivaldictl has a stable release.
           prerelease: true
           server-url: https://ivaldi.example.com
-          github-token: ${{ secrets.IVALDICTL_RELEASES_TOKEN }}
-      - if: steps.token.outputs.present == 'true'
-        shell: bash
+      - shell: bash
         env:
           VERSION: ${{ steps.setup.outputs.version }}
           CACHE_HIT: ${{ steps.setup.outputs.cache-hit }}
@@ -73,12 +58,11 @@ jobs:
           ivaldictl --version | grep -F "$VERSION"
       # A second install of the same version on the same runner is served from
       # the tool cache.
-      - if: steps.token.outputs.present == 'true'
-        id: again
+      - id: again
         uses: ./setup-ivaldictl
         with:
           version: ${{ steps.setup.outputs.version }}
-          github-token: ${{ secrets.IVALDICTL_RELEASES_TOKEN }}
-      - if: steps.token.outputs.present == 'true'
-        shell: bash
-        run: '[ "${{ steps.again.outputs.cache-hit }}" = true ]'
+      - shell: bash
+        env:
+          CACHE_HIT: ${{ steps.again.outputs.cache-hit }}
+        run: '[ "$CACHE_HIT" = true ]'
